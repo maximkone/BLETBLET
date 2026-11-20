@@ -1,0 +1,16 @@
+__pycache__/
+*.log
+*.log.*
+*.dmp
+*.pid
+*.heartbeat
+*.request
+settings.json
+settings.tmp
+vosk-model*/
+*.zip
+diagnostics/
+wake.before-uia.py
+probe_hotkey.py
+smoke.py
+verify_dictation.py

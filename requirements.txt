@@ -1,0 +1,6 @@
+comtypes==1.4.17
+pillow==12.3.0
+pystray==0.19.5
+sounddevice==0.5.6
+vosk==0.3.45
+webrtcvad-wheels==2.0.14.post1

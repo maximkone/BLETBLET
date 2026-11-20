@@ -1,7 +1,30 @@
-# OpenChamber Voice
+# Голос OpenChamber
 
-Windows application for Russian dictation into the focused OpenChamber window. Run `Start.cmd`, click **Включить микрофон**, focus the desired chat and place the cursor in its input box, say «приложение» and dictate. After 4.5 seconds of silence it copies, pastes, and presses Enter. If you say the wake word alone, it waits for the next speech segment. Click the button again or close the window to stop listening.
+Запуск: **Голосовой запуск.cmd**. Приложение запускается через задачу Windows `OpenChamber Voice` при входе в учётную запись.
 
-Audio is processed locally with faster-whisper `small`; the first start downloads the model. Text is sent to the active chat and its model provider. Speech recognition and voice activity detection can mistake other voices, speaker output or silence for speech; this tool is not speaker identification. Use headphones and stop it for private conversations. The process-name check cannot prove the chat input is focused or which chat is selected: verify both yourself. The clipboard is replaced. This initial version is not verified against live speech; long pauses can split a message and text in progress is discarded on exit.
+В небольшом окне:
+- Начало: одно или два слова в маленьком поле (или два поля с разными словами). Слово ищется **в любом месте** услышанной фразы: «алло», «ну алло», «так алло» — всё подойдёт, повторять отдельно не нужно.
+- Запись завершается **только тишиной**. Слова завершения больше не используются и не могут случайно отправить сообщение посреди фразы.
+- Пауза по умолчанию: **3 секунды** непрерывной тишины после начала речи. Её можно увеличить в окне.
+- Изменения сохраняются автоматически; есть «Сохранить».
+- «Пауза» отключает прослушивание. × только скрывает окно в трей. «Выход» в меню значка завершает программу и сторож до следующего запуска/входа Windows.
 
-Requirements: Python, `pip install faster-whisper numpy sounddevice webrtcvad-wheels`.
+Команды распознаёт локальный Vosk с ограниченным словарём. Полный текст диктует встроенная функция OpenChamber. Записи аудио не сохраняются. Любой слышимый голос может активировать команду начала; используйте наушники. Во время записи распознавание выключено полностью — ни одно слово не способно остановить или отправить запись. Пауза не может быть меньше 3 секунд; остановка в речи длиннее настроенной паузы завершит запись.
+
+## Управление OpenChamber
+
+Не требуется нажимать Ctrl+Alt+V самому. Программа находит доступные кнопки по точному имени средствами Windows UI Automation:
+- `Start dictation` — начало;
+- `Insert and send` вместе с `Discard dictation` и `Insert transcript` в той же панели — завершение и отправка.
+
+Запросы идут в один постоянный фоновый процесс UI Automation (`oc_uia_server.py`), поэтому команда выполняется примерно за 50–100 мс вместо секунды на запуск процесса. Если запрос зависает, процесс перезапускается; опасные команды (start/send/cancel) после тайм-аута **не** повторяются.
+
+Слово начала поднимает окно OpenChamber на передний план и само нажимает «Start dictation», поэтому не нужно щёлкать по окну. Отправление и отмена работают только если активное окно действительно OpenChamber и в нём найдена записывающая панель с нужной подписью; при неизвестном состоянии Enter вслепую не нажимается и по координатам не кликается. Нажатие «Insert and send» передаёт отправку самому OpenChamber — сообщение об успешном нажатии не доказывает успешную сетевую отправку. Точные имена проверены в английском интерфейсе установленной версии; другой язык/обновление может потребовать новых селекторов.
+
+Пауза работает и при записи, включённой вручную. Она отслеживается только после подтверждённой записи. Переход в другой чат/приложение может блокировать отправку ради защиты от отправки не туда.
+
+## Диагностика
+
+`voice.log` — запуск, команды и результат UIA; `guard.log` — запуски/коды завершения процесса; `crash.log` — стеки Python; `app.heartbeat` — сигнал главного потока каждые 5 секунд; `settings.json` — настройки. Сторож перезапускает аварийно завершившийся/зависший процесс. При зависании может создать `worker-hang.dmp` (локальный дамп с потенциально чувствительными данными; не публиковать).
+
+Python 3.13, vosk, sounddevice, webrtcvad-wheels, pystray, pillow, comtypes (`pip install -r requirements.txt`). Речь распознаёт локальная модель `vosk-model-small-ru-0.22` — скажи её отдельно с https://alphacephei.com/vosk/models и распакуй в папку программы под этим именем; в репозитории модели нет. Пути к `pythonw.exe` (guard.py) и к OpenChamber.exe (oc_uia.py) подставь свои. Проверки: `python test_voice.py`, `python oc_uia.py --self-test`. Прототип требует проверки реальной речи и отправки в установленном OpenChamber; абсолютная точность распознавания и непрерывная работа не гарантируются.
