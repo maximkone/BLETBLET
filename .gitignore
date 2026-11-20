@@ -14,3 +14,5 @@ wake.before-uia.py
 probe_hotkey.py
 smoke.py
 verify_dictation.py
+
+Голосовой запуск.cmd
