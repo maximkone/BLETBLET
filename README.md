@@ -1,8 +1,19 @@
 # Голос OpenChamber
 
-Запуск: **Голосовой запуск.cmd**. Приложение запускается через задачу Windows `OpenChamber Voice` при входе в учётную запись.
+Крошечный помощник для Windows: голосом включает встроенную диктовку OpenChamber по слову начала и сам отправляет сообщение после тишины. Работает локально, без облака и без записи аудио.
 
-В небольшом окне:
+## Установка
+
+1. Python 3.13 и зависимости: `pip install -r requirements.txt`.
+2. Локальная модель распознавания: скачай `vosk-model-small-ru-0.22` с https://alphacephei.com/vosk/models и распакуй в папку программы (в репозиторий модели не входят).
+3. Проверь путь к `pythonw.exe` в `guard.py` и `install-guard.ps1` (по умолчанию `C:\Program Files\Python313\pythonw.exe`). OpenChamber ищется сам через `%LOCALAPPDATA%\Programs`, при необходимости задай `OPENCHAMBER_EXE`.
+4. Установка автозапуска: `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-guard.ps1`, затем `Enable-ScheduledTask -TaskName "OpenChamber Voice"`.
+5. Пуск: двойной клик **Start.cmd** (или `powershell -NoProfile -File .\start-guard.ps1`).
+
+Проверки без микрофона: `python test_voice.py` и `python oc_uia.py --self-test`.
+
+## Окно
+
 - Начало: одно или два слова в маленьком поле (или два поля с разными словами). Слово ищется **в любом месте** услышанной фразы: «алло», «ну алло», «так алло» — всё подойдёт, повторять отдельно не нужно.
 - Запись завершается **только тишиной**. Слова завершения больше не используются и не могут случайно отправить сообщение посреди фразы.
 - Пауза по умолчанию: **3 секунды** непрерывной тишины после начала речи. Её можно увеличить в окне.
@@ -27,4 +38,4 @@
 
 `voice.log` — запуск, команды и результат UIA; `guard.log` — запуски/коды завершения процесса; `crash.log` — стеки Python; `app.heartbeat` — сигнал главного потока каждые 5 секунд; `settings.json` — настройки. Сторож перезапускает аварийно завершившийся/зависший процесс. При зависании может создать `worker-hang.dmp` (локальный дамп с потенциально чувствительными данными; не публиковать).
 
-Python 3.13, vosk, sounddevice, webrtcvad-wheels, pystray, pillow, comtypes (`pip install -r requirements.txt`). Речь распознаёт локальная модель `vosk-model-small-ru-0.22` — скажи её отдельно с https://alphacephei.com/vosk/models и распакуй в папку программы под этим именем; в репозитории модели нет. Пути к `pythonw.exe` (guard.py) и к OpenChamber.exe (oc_uia.py) подставь свои. Проверки: `python test_voice.py`, `python oc_uia.py --self-test`. Прототип требует проверки реальной речи и отправки в установленном OpenChamber; абсолютная точность распознавания и непрерывная работа не гарантируются.
+Python 3.13, vosk, sounddevice, webrtcvad-wheels, pystray, pillow, comtypes (`pip install -r requirements.txt`). Речь распознаёт локальная модель `vosk-model-small-ru-0.22` — скачай её отдельно с https://alphacephei.com/vosk/models и распакуй в папку программы под этим именем; в репозитории модели нет. Путь к OpenChamber.exe находится сам (можно задать переменной `OPENCHAMBER_EXE`); путь к `pythonw.exe` в guard.py и install-guard.ps1 подставь свой. Проверки: `python test_voice.py`, `python oc_uia.py --self-test`. Прототип требует проверки реальной речи и отправки в установленном OpenChamber; абсолютная точность распознавания и непрерывная работа не гарантируются.

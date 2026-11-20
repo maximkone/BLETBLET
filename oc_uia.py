@@ -12,7 +12,21 @@ import hashlib
 import os
 import sys
 
-EXE = r"C:\Users\me\AppData\Local\Programs\@openchamberelectron\OpenChamber.exe"
+def _find_exe():
+    """Locate the OpenChamber Electron executable; override with OPENCHAMBER_EXE."""
+    import glob
+    candidates = [os.environ.get('OPENCHAMBER_EXE')]
+    roots = [os.path.join(os.path.expandvars(r'%LOCALAPPDATA%'), 'Programs')]
+    for root in roots:
+        for name in ('@openchamberelectron', 'openchamber', 'OpenChamber'):
+            candidates += glob.glob(os.path.join(root, name, 'OpenChamber.exe'))
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return os.path.normcase(os.path.normpath(path))
+    return ''
+
+
+EXE = _find_exe()
 START = "Start dictation"
 CANCEL = "Discard dictation"
 INSERT = "Insert transcript"
