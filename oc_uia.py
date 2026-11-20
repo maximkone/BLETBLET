@@ -11,6 +11,7 @@ import json
 import hashlib
 import os
 import sys
+import time
 
 def _find_exe():
     """Locate the OpenChamber Electron executable; override with OPENCHAMBER_EXE."""
@@ -110,24 +111,50 @@ def focus_openchamber():
         raise RuntimeError("openchamber_window_not_found")
     hwnd = max(targets)[1]
     user.ShowWindow(hwnd, 9)  # SW_RESTORE
+    # A background process is not allowed to steal focus; the documented
+    # workaround is to nudge ALT first so SetForegroundWindow is honoured.
+    user.keybd_event(0x12, 0, 0, 0)
+    user.keybd_event(0x12, 0, 2, 0)
+    user.SetForegroundWindow(hwnd)
     user.SwitchToThisWindow(hwnd, True)
     return hwnd
 
 
+def wait_foreground(predicate, timeout=1.5, get=foreground):
+    """Foreground changes are asynchronous: poll instead of failing at once."""
+    deadline = time.monotonic() + timeout
+    last = None
+    while time.monotonic() < deadline:
+        try:
+            hwnd, path = get()
+        except RuntimeError as exc:
+            last = str(exc)
+            time.sleep(.03)
+            continue
+        if predicate(hwnd, path):
+            return hwnd, path
+        last = "other_process"
+        time.sleep(.03)
+    raise RuntimeError("focus_not_acquired: " + str(last))
+
+
 def checked_foreground(expected=None, get=foreground, focus=False):
+    def is_openchamber(_hwnd, path):
+        return (os.path.normcase(os.path.normpath(path))
+                == os.path.normcase(os.path.normpath(EXE)))
+
     try:
         hwnd, path = get()
     except RuntimeError:
         if not focus:
             raise
         focus_openchamber()
-        hwnd, path = get()
-    if os.path.normcase(os.path.normpath(path)) != os.path.normcase(os.path.normpath(EXE)):
-        if focus:
-            focus_openchamber()
-            hwnd, path = get()
-        if os.path.normcase(os.path.normpath(path)) != os.path.normcase(os.path.normpath(EXE)):
+        hwnd, path = wait_foreground(is_openchamber, get=get)
+    if not is_openchamber(hwnd, path):
+        if not focus:
             raise RuntimeError("foreground_not_openchamber")
+        focus_openchamber()
+        hwnd, path = wait_foreground(is_openchamber, get=get)
     if expected is not None and hwnd != expected:
         raise RuntimeError("foreground_changed")
     return hwnd
