@@ -9,7 +9,10 @@ import sys
 import time
 
 BASE = Path(__file__).resolve().parent
-PYTHON = Path(r'C:\Program Files\Python313\pythonw.exe')
+# Task Scheduler starts this file with pythonw.exe, so the worker simply reuses
+# the interpreter that is already running: no second hardcoded path to fix on a
+# machine with a different Python.
+PYTHON = Path(sys.executable)
 APP = BASE / 'wake.py'
 HEARTBEAT = BASE / 'app.heartbeat'
 SHOW = BASE / 'show.request'

@@ -6,11 +6,17 @@
 
 1. Python 3.13 и зависимости: `pip install -r requirements.txt`.
 2. Локальная модель распознавания: скачай `vosk-model-small-ru-0.22` с https://alphacephei.com/vosk/models и распакуй в папку программы (в репозиторий модели не входят).
-3. Проверь путь к `pythonw.exe` в `guard.py` и `install-guard.ps1` (по умолчанию `C:\Program Files\Python313\pythonw.exe`). OpenChamber ищется сам через `%LOCALAPPDATA%\Programs`, при необходимости задай `OPENCHAMBER_EXE`.
-4. Установка автозапуска: `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-guard.ps1`, затем `Enable-ScheduledTask -TaskName "OpenChamber Voice"`.
-5. Пуск: двойной клик **Start.cmd** (или `powershell -NoProfile -File .\start-guard.ps1`).
+3. Путь к `pythonw.exe` править не нужно: сторож запускает воркера тем же питоном, которым запущен сам, а установщик ищет `C:\Program Files\Python313\pythonw.exe` и падает на `pythonw.exe` из `PATH`. OpenChamber ищется сам через `%LOCALAPPDATA%\Programs`, при необходимости задай `OPENCHAMBER_EXE`.
+4. Установка автозапуска: двойной клик **Install.cmd** (или `powershell -NoProfile -ExecutionPolicy Bypass -File .\install-guard.ps1`), затем `Enable-ScheduledTask -TaskName "OpenChamber Voice"`.
+5. Пуск: двойной клик **Start.cmd** (или `powershell -NoProfile -ExecutionPolicy Bypass -File .\start-guard.ps1`).
 
 Проверки без микрофона: `python test_voice.py` и `python oc_uia.py --self-test`.
+
+## Если скрипт не запускается
+
+Папку, распакованную из скачанного архива, Windows помечает «из интернета», и политика `RemoteSigned` отказывается грузить такие файлы: `...start-guard.ps1 cannot be loaded. The file ... is not digitally signed`. **Start.cmd** и **Install.cmd** передают `-ExecutionPolicy Bypass` и снимают пометку со своих `.ps1`/`.py`, поэтому двойного клика достаточно. Вручную для всей папки: `Get-ChildItem -File | Unblock-File`; автозапуск планировщика от политик не зависит — задача запускает `pythonw.exe guard.py` напрямую.
+
+Задача в планировщике одна на пользователя: работает та папка, которая записана в задаче. `Start.cmd` из другой копии только поднимет окно работающей копии и напишет, где лежит установленная версия.
 
 ## Окно
 
@@ -38,4 +44,4 @@
 
 `voice.log` — запуск, команды и результат UIA; `guard.log` — запуски/коды завершения процесса; `crash.log` — стеки Python; `app.heartbeat` — сигнал главного потока каждые 5 секунд; `settings.json` — настройки. Сторож перезапускает аварийно завершившийся/зависший процесс. При зависании может создать `worker-hang.dmp` (локальный дамп с потенциально чувствительными данными; не публиковать).
 
-Python 3.13, vosk, sounddevice, webrtcvad-wheels, pystray, pillow, comtypes (`pip install -r requirements.txt`). Речь распознаёт локальная модель `vosk-model-small-ru-0.22` — скачай её отдельно с https://alphacephei.com/vosk/models и распакуй в папку программы под этим именем; в репозитории модели нет. Путь к OpenChamber.exe находится сам (можно задать переменной `OPENCHAMBER_EXE`); путь к `pythonw.exe` в guard.py и install-guard.ps1 подставь свой. Проверки: `python test_voice.py`, `python oc_uia.py --self-test`. Прототип требует проверки реальной речи и отправки в установленном OpenChamber; абсолютная точность распознавания и непрерывная работа не гарантируются.
+Python 3.13, vosk, sounddevice, webrtcvad-wheels, pystray, pillow, comtypes (`pip install -r requirements.txt`). Речь распознаёт локальная модель `vosk-model-small-ru-0.22` — скачай её отдельно с https://alphacephei.com/vosk/models и распакуй в папку программы под этим именем; в репозитории модели нет. Путь к OpenChamber.exe находится сам (можно задать переменной `OPENCHAMBER_EXE`); путь к `pythonw.exe` править не нужно — его ищет установщик, а сторож берёт свой собственный интерпретатор. Запускай **Start.cmd** и **Install.cmd**: они обходят блокировку скачанных скриптов. Проверки: `python test_voice.py`, `python oc_uia.py --self-test`. Прототип требует проверки реальной речи и отправки в установленном OpenChamber; абсолютная точность распознавания и непрерывная работа не гарантируются.
